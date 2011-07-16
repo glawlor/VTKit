@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 2.8)
 
 PROJECT(VTKIT)
 
+FIND_PROGRAM(UPX_COMMAND upx NAMES upx upx.exe DOC "Path to UPX executable")
+FIND_PROGRAM(SDX_COMMAND sdx NAMES sdx sdx.exe DOC "Path to SDX executable")
+FIND_PATH(TCL_WIN_EXTRA_LIBS NAMES tcldde13s.lib tclreg12s.lib
+    PATHS "${VTK_TCL_INCLUDE_PATH}/../win/Release_VC9" "${VTK_TCL_INCLUDE_PATH}/../win/Release"
+    DOC "Path to tcldde and tclreg libraries")
+
 # Need to include class headers and the configuration header.
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
@@ -37,4 +43,3 @@ ENDIF(VTK_BUILD_SHARED_LIBS)
 SUBDIRS(tclkit)
 
 # Build the VTKit runtime
-

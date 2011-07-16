@@ -1,9 +1,10 @@
 PROJECT(Mk4tcl)
 
 INCLUDE_DIRECTORIES(BEFORE ${Mk4tcl_SOURCE_DIR})
+INCLUDE_DIRECTORIES("${VTK_TCL_INCLUDE_DIR}")
 
 #Source files for metakit
-SET(Mk4tcl_SRCS 
+SET(Mk4tcl_SRCS
 remap.cpp
 fileio.cpp
 view.cpp
