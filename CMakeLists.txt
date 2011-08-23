@@ -5,7 +5,7 @@ PROJECT(VTKIT)
 FIND_PROGRAM(UPX_COMMAND upx NAMES upx upx.exe DOC "Path to UPX executable")
 FIND_PROGRAM(SDX_COMMAND sdx NAMES sdx sdx.exe DOC "Path to SDX executable")
 FIND_PATH(TCL_WIN_EXTRA_LIBS NAMES tcldde13s.lib tclreg12s.lib
-    PATHS "${VTK_TCL_INCLUDE_PATH}/../win/Release_VC9" "${VTK_TCL_INCLUDE_PATH}/../win/Release"
+    PATHS "${VTK_TCL_INCLUDE_PATH}/../win/Release_VC10" "${VTK_TCL_INCLUDE_PATH}/../win/Release"
     DOC "Path to tcldde and tclreg libraries")
 
 # Need to include class headers and the configuration header.
