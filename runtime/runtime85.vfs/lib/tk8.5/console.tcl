@@ -151,7 +151,7 @@ proc ::tk::ConsoleInit {} {
     if {[info command ::send] eq "::send"} {rename ::send {}}
 
     wm protocol . WM_DELETE_WINDOW { wm withdraw . }
-    wm title . [mc "Console"]
+    wm title . [mc "VTKit Console"]
     flush stdout
     $con mark set output [$con index "end - 1 char"]
     tk::TextSetCursor $con end

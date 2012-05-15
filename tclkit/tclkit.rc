@@ -51,7 +51,7 @@ BEGIN
             VALUE "OriginalFilename", "VTKit.exe\0"
             VALUE "CompanyName", "www.bioengineering-research.com\0"
             VALUE "FileVersion", TK_PATCH_LEVEL
-            VALUE "LegalCopyright", "Copyright \251 1989-2003 by J.Ousterhout et al.\0"
+            VALUE "LegalCopyright", "Copyright \251 1989-2003 by J.Ousterhout et al., Kitware, Equi4, Goodwin Lawlor\0"
             VALUE "ProductName", "VTKit " TK_VERSION " for Windows\0"
             VALUE "ProductVersion", TK_PATCH_LEVEL
         END

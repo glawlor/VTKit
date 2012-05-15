@@ -1,45 +1,45 @@
 cmake_minimum_required(VERSION 2.8)
 
-PROJECT(VTKIT)
+project(VTKIT)
 
-FIND_PROGRAM(UPX_COMMAND upx NAMES upx upx.exe DOC "Path to UPX executable")
-FIND_PROGRAM(SDX_COMMAND sdx NAMES sdx sdx.exe DOC "Path to SDX executable")
+find_program(UPX_COMMAND upx NAMES upx upx.exe DOC "Path to UPX executable")
+find_program(SDX_COMMAND sdx NAMES sdx sdx.exe DOC "Path to SDX executable")
 FIND_PATH(TCL_WIN_EXTRA_LIBS NAMES tcldde13s.lib tclreg12s.lib
     PATHS "${VTK_TCL_INCLUDE_PATH}/../win/Release_VC10" "${VTK_TCL_INCLUDE_PATH}/../win/Release"
     DOC "Path to tcldde and tclreg libraries")
 
 # Need to include class headers and the configuration header.
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_BINARY_DIR})
 
-IF(WIN32)
-   ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
-ENDIF(WIN32)
+if(WIN32)
+   add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+endif()
 
 # Setup output paths.
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH
     "Single output directory for building all libraries.")
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH
     "Single output directory for building all executables.")
-MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
+mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 
 # All libraries are built statically
-SET (BUILD_SHARED_LIBS OFF)
-ADD_DEFINITIONS(-DSTATIC_BUILD)
+set(BUILD_SHARED_LIBS OFF)
+add_definitions(-DSTATIC_BUILD)
 
 # Build the Metakit library, mk.lib
 SUBDIRS(Mk4tcl)
 
 # Find and load VTK settings.
-FIND_PACKAGE(VTK REQUIRED)
-INCLUDE(${VTK_USE_FILE})
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
 
 # Error if users trys to link shared VTK libs
-IF(VTK_BUILD_SHARED_LIBS)
-   MESSAGE(SEND_ERROR "VTKit requires static VTK libraries")
-ENDIF(VTK_BUILD_SHARED_LIBS)
+if(VTK_BUILD_SHARED_LIBS)
+   message(SEND_ERROR "VTKit requires static VTK libraries")
+endif()
 
 # Build the VTKit basekit
-SUBDIRS(tclkit)
+subdirs(tclkit)
 
 # Build the VTKit runtime

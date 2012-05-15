@@ -1,6 +1,6 @@
-PROJECT(TCLKIT)
+project(TCLKIT)
 
-SET (TCLKIT_SRCS
+set(TCLKIT_SRCS
   kitInit.c
   rechan.c
   pwb.c
@@ -8,47 +8,47 @@ SET (TCLKIT_SRCS
   zlib.c
 )
 
-IF(WIN32)
-   SET(VTKIT_EXE_RESOURCE_FILES tclkit.rc )
-   ADD_DEFINITIONS(-D_USE_32BIT_TIME_T)
-   ADD_DEFINITIONS(-DTK_LOCAL_APPINIT=\"TclKit_AppInit\")
+if(WIN32)
+   set(VTKIT_EXE_RESOURCE_FILES tclkit.rc )
+   add_definitions(-D_USE_32BIT_TIME_T)
+   add_definitions(-DTK_LOCAL_APPINIT=\"TclKit_AppInit\")
    SET(TCLKIT_SRCS ${TCLKIT_SRCS} winMain.c)
-ENDIF(WIN32)
+endif()
 
-IF(UNIX)
-   SET(TCLKIT_SRCS ${TCLKIT_SRCS} tclAppInit.c main.cxx)
-   ADD_DEFINITIONS(-DTCL_LOCAL_APPINIT=\"TclKit_AppInit\")
-ENDIF(UNIX)
+if(UNIX)
+   set(TCLKIT_SRCS ${TCLKIT_SRCS} tclAppInit.c main.cxx)
+   add_definitions(-DTCL_LOCAL_APPINIT=\"TclKit_AppInit\")
+endif()
 
-INCLUDE_DIRECTORIES(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
-INCLUDE_DIRECTORIES("${VTK_TCL_INCLUDE_DIR}")
-INCLUDE_DIRECTORIES("${VTK_TK_INCLUDE_DIR}")
-INCLUDE_DIRECTORIES("${VTK_TK_INTERNAL_DIR}")
-INCLUDE_DIRECTORIES("${VTK_TK_INCLUDE_DIR}/../xlib")
+include_directories(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories("${VTK_TCL_INCLUDE_DIR}")
+include_directories("${VTK_TK_INCLUDE_DIR}")
+include_directories("${VTK_TK_INTERNAL_DIR}")
+include_directories("${VTK_TK_INCLUDE_DIR}/../xlib")
 
-IF (WIN32)
-  IF (NOT BORLAND)
-    IF(NOT CYGWIN)
-      INCLUDE_DIRECTORIES("${VTK_TCL_INCLUDE_DIR}/../win")
-      IF(VTK_USE_TK)
-        INCLUDE_DIRECTORIES("${VTK_TK_RESOURCES_DIR}" "${VTK_TK_INTERNAL_DIR}")
-      ENDIF(VTK_USE_TK)
-    ENDIF(NOT CYGWIN)
-  ENDIF (NOT BORLAND)
-ENDIF (WIN32)
+if (WIN32)
+  if (NOT BORLAND)
+    if(NOT CYGWIN)
+      include_directories("${VTK_TCL_INCLUDE_DIR}/../win")
+      if(VTK_USE_TK)
+        include_directories("${VTK_TK_RESOURCES_DIR}" "${VTK_TK_INTERNAL_DIR}")
+      endif()
+    endif()
+  endif()
+endif()
 
 # Libraries are fully qualified so don't need these... I think
-#LINK_DIRECTORIES(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
-LINK_DIRECTORIES(${TCL_WIN_EXTRA_LIBS})
+#link_directories(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
+link_directories(${TCL_WIN_EXTRA_LIBS})
 
-ADD_DEFINITIONS(-DKIT_INCLUDES_TK -DKIT_INCLUDES_VTK)
-ADD_EXECUTABLE (tclkit WIN32 ${TCLKIT_SRCS} ${VTKIT_EXE_RESOURCE_FILES})
+add_definitions(-DKIT_INCLUDES_TK -DKIT_INCLUDES_VTK)
+add_executable (tclkit WIN32 ${TCLKIT_SRCS} ${VTKIT_EXE_RESOURCE_FILES})
 
 # Tcl/Tk is linked with /GL so tclkit could do with /LTCG ... on windows
-#SET_TARGET_PROPERTIES(tclkit PROPERTIES LINK_FLAGS  "${LINK_FLAGS} -LTCG")
+#set_target_properties(tclkit PROPERTIES LINK_FLAGS  "${LINK_FLAGS} -LTCG")
 
 
-TARGET_LINK_LIBRARIES (tclkit
+target_link_libraries (tclkit
   Mk4tcl
   vtkCommonTCL
   vtkFilteringTCL
@@ -57,61 +57,61 @@ TARGET_LINK_LIBRARIES (tclkit
   vtkIOTCL
 )
 
-IF (WIN32)
+if (WIN32)
   TARGET_LINK_LIBRARIES(tclkit tcldde13s)
   TARGET_LINK_LIBRARIES(tclkit tclreg12s)
-ENDIF (WIN32)
+endif ()
 
-IF (VTK_USE_RENDERING)
-  TARGET_LINK_LIBRARIES(tclkit vtkRenderingTCL)
-  TARGET_LINK_LIBRARIES(tclkit vtkVolumeRenderingTCL)
-  TARGET_LINK_LIBRARIES(tclkit vtkHybridTCL)
-  TARGET_LINK_LIBRARIES(tclkit vtkWidgetsTCL)
-  ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_RENDERING)
-ENDIF (VTK_USE_RENDERING)
+if (VTK_USE_RENDERING)
+  target_link_libraries(tclkit vtkRenderingTCL)
+  target_link_libraries(tclkit vtkVolumeRenderingTCL)
+  target_link_libraries(tclkit vtkHybridTCL)
+  target_link_libraries(tclkit vtkWidgetsTCL)
+  add_definitions(-DKIT_INCLUDES_VTK_RENDERING)
+endif ()
 
-IF (VTK_USE_PARALLEL)
-  TARGET_LINK_LIBRARIES(tclkit vtkParallelTCL)
+if (VTK_USE_PARALLEL)
+  target_link_libraries(tclkit vtkParallelTCL)
   ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_PARALLEL)
-ENDIF (VTK_USE_PARALLEL)
+endif ()
 
-IF (VTK_USE_INFOVIS)
-  TARGET_LINK_LIBRARIES(tclkit vtkInfovisTCL)
+if(VTK_USE_INFOVIS)
+  target_link_libraries(tclkit vtkInfovisTCL)
   ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_INFOVIS)
-ENDIF (VTK_USE_INFOVIS)
+endif ()
 
-IF (VTK_USE_VIEWS)
+if(VTK_USE_VIEWS)
   TARGET_LINK_LIBRARIES(tclkit vtkViewsTCL)
   ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_VIEWS)
-ENDIF (VTK_USE_VIEWS)
+endif()
 
-INCLUDE(${VTK_CMAKE_DIR}/vtkTclTkMacros.cmake)
+include(${VTK_CMAKE_DIR}/vtkTclTkMacros.cmake)
 VTK_GET_TCL_TK_VERSION ("TCLTK_MAJOR_VERSION" "TCLTK_MINOR_VERSION")
-SET (TCLTK_VERSION "${TCLTK_MAJOR_VERSION}${TCLTK_MINOR_VERSION}")
+set (TCLTK_VERSION "${TCLTK_MAJOR_VERSION}${TCLTK_MINOR_VERSION}")
 
 
 # Compress the binary and append the runtime.
-IF (WIN32)
-  SET (EXECUTABLE_OUTPUT_DIR "${VTKIT_BINARY_DIR}\\bin\\${CMAKE_CFG_INTDIR}")
-  STRING(REGEX REPLACE "/" "\\\\" EOD ${EXECUTABLE_OUTPUT_DIR})
-  STRING(REGEX REPLACE "/" "\\\\" VSD ${VTKIT_SOURCE_DIR})
-  ADD_CUSTOM_COMMAND(TARGET tclkit
+if (WIN32)
+  set (EXECUTABLE_OUTPUT_DIR "${VTKIT_BINARY_DIR}\\bin\\${CMAKE_CFG_INTDIR}")
+  string(REGEX REPLACE "/" "\\\\" EOD ${EXECUTABLE_OUTPUT_DIR})
+  string(REGEX REPLACE "/" "\\\\" VSD ${VTKIT_SOURCE_DIR})
+  add_custom_command(TARGET tclkit
        POST_BUILD
        COMMAND ${UPX_COMMAND}
        ARGS -9 -f -o ${EOD}\\VTKit-upx.exe ${EOD}\\tclkit.exe
        COMMAND COPY
        ARGS /B ${EOD}\\VTKit-upx.exe+${VSD}\\Runtime\\runtime${TCLTK_VERSION}.kit ${EOD}\\VTKit.exe
        )
-ENDIF (WIN32)
+endif()
 
 
 
-IF(UNIX)
-  ADD_CUSTOM_COMMAND(TARGET tclkit
+if(UNIX)
+  add_custom_command(TARGET tclkit
         POST_BUILD
         COMMAND ${UPX_COMMAND} -9 -f -o ../bin/VTKit-upx ../bin/tclkit
         ARGS
         COMMAND cat
         ARGS ${VTKIT_SOURCE_DIR}/runtime/runtime${TCLTK_VERSION}.kit >>../bin/VTKit-upx
         )
-ENDIF(UNIX)
+endif()
