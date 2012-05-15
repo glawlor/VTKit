@@ -12,7 +12,7 @@ if(WIN32)
    set(VTKIT_EXE_RESOURCE_FILES tclkit.rc )
    add_definitions(-D_USE_32BIT_TIME_T)
    add_definitions(-DTK_LOCAL_APPINIT=\"TclKit_AppInit\")
-   SET(TCLKIT_SRCS ${TCLKIT_SRCS} winMain.c)
+   set(TCLKIT_SRCS ${TCLKIT_SRCS} winMain.c)
 endif()
 
 if(UNIX)
