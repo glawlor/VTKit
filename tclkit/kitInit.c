@@ -332,9 +332,9 @@ TclKit_AppInit(Tcl_Interp *interp)
         goto error;
 
 #ifdef KIT_INCLUDES_TK
-#ifdef _WIN32
     if (Tk_Init(interp) == TCL_ERROR)
         goto error;
+#ifdef _WIN32
     if (Tk_CreateConsoleWindow(interp) == TCL_ERROR)
         goto error;
 #endif
