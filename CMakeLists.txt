@@ -2,16 +2,22 @@ cmake_minimum_required(VERSION 2.8)
 
 project(VTKIT)
 
+# Find upx and sdx utilities
 find_program(UPX_COMMAND upx NAMES upx upx.exe DOC "Path to UPX executable")
 find_program(SDX_COMMAND sdx NAMES sdx sdx.exe DOC "Path to SDX executable")
+
+# Optionally link tcl's dde and registry libs on Windows
+if(WIN32)
 FIND_PATH(TCL_WIN_EXTRA_LIBS NAMES tcldde13s.lib tclreg12s.lib
     PATHS "${VTK_TCL_INCLUDE_PATH}/../win/Release_VC10" "${VTK_TCL_INCLUDE_PATH}/../win/Release"
     DOC "Path to tcldde and tclreg libraries")
+endif()
 
 # Need to include class headers and the configuration header.
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
+# Kill squawks on Windows
 if(WIN32)
    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 endif()
@@ -39,7 +45,7 @@ if(VTK_BUILD_SHARED_LIBS)
    message(SEND_ERROR "VTKit requires static VTK libraries")
 endif()
 
+# Build the VTKit runtime
+
 # Build the VTKit basekit
 subdirs(tclkit)
-
-# Build the VTKit runtime
