@@ -23,6 +23,7 @@ endif()
 if(UNIX)
    set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/unix/tkAppInit.c)
    add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
+   add_definitions(-DHAVE_UNISTD_H=1)
 endif()
 
 include_directories("${VTKIT_TCL_SRC}/generic")
@@ -117,6 +118,6 @@ if(UNIX)
         COMMAND ${UPX_COMMAND} -9 -f -o ../bin/VTKit-upx ../bin/tclkit
         ARGS
         COMMAND cat
-        ARGS ../bin/tclkit ${VTKIT_SOURCE_DIR}/runtime/runtime${TCLTK_VERSION}.kit > ../bin/VTKit
+        ARGS ../bin/VTKit-upx ${VTKIT_SOURCE_DIR}/runtime/runtime${TCLTK_VERSION}.kit > ../bin/VTKit
         )
 endif()
