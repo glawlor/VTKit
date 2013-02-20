@@ -8,45 +8,52 @@ set(TCLKIT_SRCS
   zlib.c
 )
 
+set(VTKIT_TCL_SRC ${VTK_TCL_INCLUDE_DIR} CACHE PATH
+    "The root of the Tcl source code tree")
+set(VTKIT_TK_SRC ${VTK_TK_INCLUDE_DIR} CACHE PATH
+    "The root of the Tk source code tree")
+
 if(WIN32)
+   set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/win/winMain.c)
    set(VTKIT_EXE_RESOURCE_FILES tclkit.rc )
    add_definitions(-D_USE_32BIT_TIME_T)
-   add_definitions(-DTK_LOCAL_APPINIT=\"TclKit_AppInit\")
-   set(TCLKIT_SRCS ${TCLKIT_SRCS} winMain.c)
+   add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
 endif()
 
 if(UNIX)
-   set(TCLKIT_SRCS ${TCLKIT_SRCS} tclAppInit.c main.cxx)
-   add_definitions(-DTCL_LOCAL_APPINIT=\"TclKit_AppInit\")
+   set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/unix/tkAppInit.c)
+   add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
 endif()
 
+include_directories("${VTKIT_TCL_SRC}/generic")
+include_directories("${VTKIT_TK_SRC}/generic")
+include_directories("${VTKIT_TK_SRC}/xlib")
 include_directories(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
-include_directories("${VTK_TCL_INCLUDE_DIR}")
-include_directories("${VTK_TK_INCLUDE_DIR}")
-include_directories("${VTK_TK_INTERNAL_DIR}")
-include_directories("${VTK_TK_INCLUDE_DIR}/../xlib")
-
 if (WIN32)
   if (NOT BORLAND)
     if(NOT CYGWIN)
-      include_directories("${VTK_TCL_INCLUDE_DIR}/../win")
+      include_directories("${VTKIT_TCL_SRC}/win")
       if(VTK_USE_TK)
-        include_directories("${VTK_TK_RESOURCES_DIR}" "${VTK_TK_INTERNAL_DIR}")
+        include_directories("${VTKIT_TK_SRC}/win/rc")
       endif()
     endif()
   endif()
 endif()
 
-# Libraries are fully qualified so don't need these... I think
-#link_directories(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
+if(UNIX)
+    include_directories("${VTKIT_TCL_SRC}/unix")
+endif()
+
+link_directories(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
 link_directories(${TCL_WIN_EXTRA_LIBS})
 
 add_definitions(-DKIT_INCLUDES_TK -DKIT_INCLUDES_VTK)
 add_executable (tclkit WIN32 ${TCLKIT_SRCS} ${VTKIT_EXE_RESOURCE_FILES})
 
 # Tcl/Tk is linked with /GL so tclkit could do with /LTCG ... on windows
-#set_target_properties(tclkit PROPERTIES LINK_FLAGS  "${LINK_FLAGS} -LTCG")
-
+if(WIN32)
+    set_target_properties(tclkit PROPERTIES LINK_FLAGS  "${LINK_FLAGS} -LTCG")
+endif()
 
 target_link_libraries (tclkit
   Mk4tcl
@@ -104,14 +111,12 @@ if (WIN32)
        )
 endif()
 
-
-
 if(UNIX)
   add_custom_command(TARGET tclkit
         POST_BUILD
         COMMAND ${UPX_COMMAND} -9 -f -o ../bin/VTKit-upx ../bin/tclkit
         ARGS
         COMMAND cat
-        ARGS ${VTKIT_SOURCE_DIR}/runtime/runtime${TCLTK_VERSION}.kit >>../bin/VTKit-upx
+        ARGS ../bin/tclkit ${VTKIT_SOURCE_DIR}/runtime/runtime${TCLTK_VERSION}.kit > ../bin/VTKit
         )
 endif()
