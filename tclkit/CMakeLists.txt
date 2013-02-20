@@ -13,6 +13,13 @@ set(VTKIT_TCL_SRC ${VTK_TCL_INCLUDE_DIR} CACHE PATH
 set(VTKIT_TK_SRC ${VTK_TK_INCLUDE_DIR} CACHE PATH
     "The root of the Tk source code tree")
 
+# Check for system headers
+INCLUDE (CheckIncludeFiles)
+CHECK_INCLUDE_FILES (unistd.h HAVE_UNISTD_H)
+if(HAVE_UNISTD_H)
+   add_definitions(-DHAVE_UNISTD_H=1)
+endif()
+
 if(WIN32)
    set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/win/winMain.c)
    set(VTKIT_EXE_RESOURCE_FILES tclkit.rc )
@@ -23,7 +30,6 @@ endif()
 if(UNIX)
    set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/unix/tkAppInit.c)
    add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
-   add_definitions(-DHAVE_UNISTD_H=1)
 endif()
 
 include_directories("${VTKIT_TCL_SRC}/generic")
