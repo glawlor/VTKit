@@ -14,8 +14,8 @@ set(VTKIT_TK_SRC ${VTK_TK_INCLUDE_DIR} CACHE PATH
     "The root of the Tk source code tree")
 
 # Check for system headers
-INCLUDE (CheckIncludeFiles)
-CHECK_INCLUDE_FILES (unistd.h HAVE_UNISTD_H)
+include (CheckIncludeFiles)
+check_include_files (unistd.h HAVE_UNISTD_H)
 if(HAVE_UNISTD_H)
    add_definitions(-DHAVE_UNISTD_H=1)
 endif()
@@ -36,6 +36,7 @@ include_directories("${VTKIT_TCL_SRC}/generic")
 include_directories("${VTKIT_TK_SRC}/generic")
 include_directories("${VTKIT_TK_SRC}/xlib")
 include_directories(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
+
 if (WIN32)
   if (NOT BORLAND)
     if(NOT CYGWIN)
@@ -72,8 +73,8 @@ target_link_libraries (tclkit
 )
 
 if (WIN32)
-  TARGET_LINK_LIBRARIES(tclkit tcldde13s)
-  TARGET_LINK_LIBRARIES(tclkit tclreg12s)
+  target_link_libraries(tclkit tcldde13s)
+  target_link_libraries(tclkit tclreg12s)
 endif ()
 
 if (VTK_USE_RENDERING)
@@ -86,17 +87,17 @@ endif ()
 
 if (VTK_USE_PARALLEL)
   target_link_libraries(tclkit vtkParallelTCL)
-  ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_PARALLEL)
+  add_definitions(-DKIT_INCLUDES_VTK_PARALLEL)
 endif ()
 
 if(VTK_USE_INFOVIS)
   target_link_libraries(tclkit vtkInfovisTCL)
-  ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_INFOVIS)
+  add_definitions(-DKIT_INCLUDES_VTK_INFOVIS)
 endif ()
 
 if(VTK_USE_VIEWS)
-  TARGET_LINK_LIBRARIES(tclkit vtkViewsTCL)
-  ADD_DEFINITIONS(-DKIT_INCLUDES_VTK_VIEWS)
+  target_link_libraries(tclkit vtkViewsTCL)
+  add_definitions(-DKIT_INCLUDES_VTK_VIEWS)
 endif()
 
 include(${VTK_CMAKE_DIR}/vtkTclTkMacros.cmake)
