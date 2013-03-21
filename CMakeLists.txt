@@ -33,6 +33,32 @@ mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 set(BUILD_SHARED_LIBS OFF)
 add_definitions(-DSTATIC_BUILD)
 
+# Check for system headers
+# (I know I should use cmakedefine in a config file...)
+include (CheckIncludeFiles)
+include (CheckTypeSize)
+
+check_include_files (unistd.h HAVE_UNISTD_H)
+if(HAVE_UNISTD_H)
+   add_definitions(-DHAVE_UNISTD_H=1)
+endif()
+
+check_include_files(stddef.h STDC_HEADERS)
+if(STDC_HEADERS)
+   add_definitions(-DSTDC_HEADERS=1)
+endif()
+
+#for some reason this is not finding stat.h on Mac OSX when it should
+check_include_files(sts/stat.h HAVE_SYS_STAT_H)
+if( HAVE_SYS_STAT_H OR APPLE)
+   add_definitions( -DHAVE_SYS_STAT_H)
+endif()
+
+check_type_size("long" SIZEOF_LONG)
+if(HAVE_SIZEOF_LONG)
+   add_definitions(-DSIZEOF_LONG=${SIZEOF_LONG})
+endif()
+
 # Build the Metakit library, mk.lib
 SUBDIRS(Mk4tcl)
 

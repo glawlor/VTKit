@@ -8,5 +8,6 @@
 	#define HAVE_MMAP 0
 	#define HAVE_MEMMOVE 1
 	#define HAVE_BCOPY 0
-	#define SIZEOF_LONG 4
+// Cmake define this for us... on Mac OS X type long is 8
+//	#define SIZEOF_LONG 4
 #endif

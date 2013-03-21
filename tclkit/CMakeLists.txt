@@ -13,56 +13,44 @@ set(VTKIT_TCL_SRC ${VTK_TCL_INCLUDE_DIR} CACHE PATH
 set(VTKIT_TK_SRC ${VTK_TK_INCLUDE_DIR} CACHE PATH
     "The root of the Tk source code tree")
 
-# Check for system headers
-include (CheckIncludeFiles)
-check_include_files (unistd.h HAVE_UNISTD_H)
-if(HAVE_UNISTD_H)
-   add_definitions(-DHAVE_UNISTD_H=1)
-endif()
+# Platform independent rules
+include_directories("${VTKIT_TK_SRC}/generic")
+include_directories("${VTKIT_TK_SRC}/xlib")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+#include_directories(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
 
+#link_directories(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
+add_definitions(-DHAVE_STRUCT_STAT64=1)
+add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
+add_definitions(-DKIT_INCLUDES_TK -DKIT_INCLUDES_VTK)
+
+# Platform dependent rules
 if(WIN32)
    set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/win/winMain.c)
    set(VTKIT_EXE_RESOURCE_FILES tclkit.rc )
    add_definitions(-D_USE_32BIT_TIME_T)
-   add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
-endif()
-
-if(UNIX)
+   include_directories("${VTKIT_TCL_SRC}/win")
+   include_directories("${VTKIT_TK_SRC}/win/rc")
+   link_directories(${TCL_WIN_EXTRA_LIBS})
+   add_executable(tclkit WIN32 ${TCLKIT_SRCS} ${VTKIT_EXE_RESOURCE_FILES})
+   # Tcl/Tk is linked with /GL so tclkit could do with /LTCG ... on windows
+   set_target_properties(tclkit PROPERTIES LINK_FLAGS  "${LINK_FLAGS} -LTCG")
+else()
    set(TCLKIT_SRCS ${TCLKIT_SRCS} ${VTKIT_TK_SRC}/unix/tkAppInit.c)
-   add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
+   include_directories("${VTKIT_TCL_SRC}/unix")
+   include_directories("${VTKIT_TK_SRC}/unix")
+   if(APPLE)
+      include_directories("${VTKIT_TK_SRC}/macosx}")
+   endif()
+   add_executable(tclkit ${TCLKIT_SRCS})
 endif()
 
-include_directories("${VTKIT_TCL_SRC}/generic")
-include_directories("${VTKIT_TK_SRC}/generic")
-include_directories("${VTKIT_TK_SRC}/xlib")
-include_directories(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
+if(VTK_USE_COCOA)
+    #Strange, but you have to link against the Carbon framework
+    target_link_libraries(tclkit "-framework Carbon")
+endif(VTK_USE_COCOA)
 
-if (WIN32)
-  if (NOT BORLAND)
-    if(NOT CYGWIN)
-      include_directories("${VTKIT_TCL_SRC}/win")
-      if(VTK_USE_TK)
-        include_directories("${VTKIT_TK_SRC}/win/rc")
-      endif()
-    endif()
-  endif()
-endif()
-
-if(UNIX)
-    include_directories("${VTKIT_TCL_SRC}/unix")
-endif()
-
-link_directories(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
-link_directories(${TCL_WIN_EXTRA_LIBS})
-
-add_definitions(-DKIT_INCLUDES_TK -DKIT_INCLUDES_VTK)
-add_executable (tclkit WIN32 ${TCLKIT_SRCS} ${VTKIT_EXE_RESOURCE_FILES})
-
-# Tcl/Tk is linked with /GL so tclkit could do with /LTCG ... on windows
-if(WIN32)
-    set_target_properties(tclkit PROPERTIES LINK_FLAGS  "${LINK_FLAGS} -LTCG")
-endif()
-
+# Libraries to link against
 target_link_libraries (tclkit
   Mk4tcl
   vtkCommonTCL
@@ -104,7 +92,6 @@ include(${VTK_CMAKE_DIR}/vtkTclTkMacros.cmake)
 VTK_GET_TCL_TK_VERSION ("TCLTK_MAJOR_VERSION" "TCLTK_MINOR_VERSION")
 set (TCLTK_VERSION "${TCLTK_MAJOR_VERSION}${TCLTK_MINOR_VERSION}")
 
-
 # Compress the binary and append the runtime.
 if (WIN32)
   set (EXECUTABLE_OUTPUT_DIR "${VTKIT_BINARY_DIR}\\bin\\${CMAKE_CFG_INTDIR}")
@@ -117,9 +104,7 @@ if (WIN32)
        COMMAND COPY
        ARGS /B ${EOD}\\VTKit-upx.exe+${VSD}\\Runtime\\runtime${TCLTK_VERSION}.kit ${EOD}\\VTKit.exe
        )
-endif()
-
-if(UNIX)
+else()
   add_custom_command(TARGET tclkit
         POST_BUILD
         COMMAND ${UPX_COMMAND} -9 -f -o ../bin/VTKit-upx ../bin/tclkit
