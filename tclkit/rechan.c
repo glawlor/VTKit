@@ -3,7 +3,7 @@
  *
  * Reflecting channel interface
  */
-
+#include "config.h"
 #include <tcl.h>
 
 #ifndef TCL_DECLARE_MUTEX

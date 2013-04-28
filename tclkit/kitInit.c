@@ -14,7 +14,7 @@
  *
  * RCS: @(#) $Id: kitInit.c,v 1.30 2006/03/24 14:18:07 jcw Exp $
  */
-
+#include "config.h"
 #ifdef KIT_INCLUDES_TK
 #include <tk.h>
 #else

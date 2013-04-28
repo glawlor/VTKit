@@ -14,13 +14,14 @@ set(VTKIT_TK_SRC ${VTK_TK_INCLUDE_DIR} CACHE PATH
     "The root of the Tk source code tree")
 
 # Platform independent rules
+include_directories("${VTKIT_TCL_SRC}/generic")
 include_directories("${VTKIT_TK_SRC}/generic")
 include_directories("${VTKIT_TK_SRC}/xlib")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories("${CMAKE_BINARY_DIR}")
 #include_directories(${VTK_SOURCE_DIR}/Utilities/vtkzlib "${CMAKE_CURRENT_SOURCE_DIR}")
 
 #link_directories(${VTK_TK_LIBRARY} ${VTK_TCL_LIBRARY})
-add_definitions(-DHAVE_STRUCT_STAT64=1)
 add_definitions(-DTK_LOCAL_APPINIT=TclKit_AppInit)
 add_definitions(-DKIT_INCLUDES_TK -DKIT_INCLUDES_VTK)
 

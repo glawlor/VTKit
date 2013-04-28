@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(VTKIT)
 
+
 # Find upx and sdx utilities
 find_program(UPX_COMMAND upx NAMES upx upx.exe DOC "Path to UPX executable")
 find_program(SDX_COMMAND sdx NAMES sdx sdx.exe DOC "Path to SDX executable")
@@ -33,30 +34,44 @@ mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 set(BUILD_SHARED_LIBS OFF)
 add_definitions(-DSTATIC_BUILD)
 
-# Check for system headers
-# (I know I should use cmakedefine in a config file...)
-include (CheckIncludeFiles)
+## Generate config.h - tq rivet
+include (CheckFunctionExists)
 include (CheckTypeSize)
+include (CheckLibraryExists)
+include (CheckIncludeFiles)
+check_include_files   (sys/stat.h  HAVE_SYS_STAT_H)
+check_include_files   (sys/types.h HAVE_SYS_TYPES_H)
+check_include_files   (stddef.h    STDC_HEADERS)
+check_include_files   (dlfcn.h     HAVE_DLFCN_H)
+check_include_files   (inttypes.h  HAVE_INTTYPES_H)
+check_include_files   (limits.h    HAVE_LIMITS_H)
+check_function_exists (lseek64     HAVE_LSEEK64)
+check_include_files   (memory.h    HAVE_MEMORY_H)
+check_include_files   (net/errno.h HAVE_NET_ERRNO_H)
+check_function_exists (open64      HAVE_OPEN64)
+check_include_files   (stdint.h    HAVE_STDINT_H)
+check_include_files   (stdlib.h    HAVE_STDLIB_H)
+check_include_files   (strings.h   HAVE_STRINGS_H)
+check_include_files   (string.h    HAVE_STRING_H)
+set(CMAKE_EXTRA_INCLUDE_FILES sys/types.h)
+check_type_size       ("struct dirent64" HAVE_STRUCT_DIRENT64)
+set(CMAKE_EXTRA_INCLUDE_FILES)
+set(CMAKE_EXTRA_INCLUDE_FILES sys/stat.h)
+check_type_size       ("struct stat64" HAVE_STRUCT_STAT64)
+set(CMAKE_EXTRA_INCLUDE_FILES)
+check_type_size       ("long" SIZEOF_LONG)
+check_include_files   (sys/param.h HAVE_SYS_PARAM_H)
+set(CMAKE_EXTRA_INCLUDE_FILES sys/types.h)
+check_type_size       (off64_t     HAVE_TYPE_OFF64_T)
+set(CMAKE_EXTRA_INCLUDE_FILES)
+check_include_files   (unistd.h    HAVE_UNISTD_H)
+check_include_files   (pwd.h       HAVE_PWD_H)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+ADD_DEFINITIONS   ( -DHAVE_CONFIG_H=1 )
 
-check_include_files (unistd.h HAVE_UNISTD_H)
-if(HAVE_UNISTD_H)
-   add_definitions(-DHAVE_UNISTD_H=1)
-endif()
-
-check_include_files(stddef.h STDC_HEADERS)
-if(STDC_HEADERS)
-   add_definitions(-DSTDC_HEADERS=1)
-endif()
-
-#for some reason this is not finding stat.h on Mac OSX when it should
-check_include_files(sts/stat.h HAVE_SYS_STAT_H)
-if( HAVE_SYS_STAT_H OR APPLE)
+# For some reason sys/stat.h not found on mac osx, when it should be.
+if(APPLE)
    add_definitions( -DHAVE_SYS_STAT_H)
-endif()
-
-check_type_size("long" SIZEOF_LONG)
-if(HAVE_SIZEOF_LONG)
-   add_definitions(-DSIZEOF_LONG=${SIZEOF_LONG})
 endif()
 
 # Build the Metakit library, mk.lib

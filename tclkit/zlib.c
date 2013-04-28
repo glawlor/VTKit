@@ -3,7 +3,7 @@
  *
  * Interface to the "zlib" compression library
  */
-
+#include "config.h"
 #include "zlib.h"
 #include <tcl.h>
 

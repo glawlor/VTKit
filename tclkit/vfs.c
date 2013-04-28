@@ -19,7 +19,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
-
+#include "config.h"
 #include <tcl.h>
 /* Required to access the 'stat' structure fields, and TclInExit() */
 #include "tclInt.h"

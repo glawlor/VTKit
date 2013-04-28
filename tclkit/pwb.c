@@ -5,7 +5,7 @@
  */
 
 #if 10 * TCL_MAJOR_VERSION + TCL_MINOR_VERSION < 85
-
+#include "config.h"
 #include <tcl.h>
 #include <tclInt.h> /* TclGetLibraryPath */
 
