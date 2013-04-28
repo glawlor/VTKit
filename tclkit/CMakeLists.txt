@@ -8,9 +8,12 @@ set(TCLKIT_SRCS
   zlib.c
 )
 
-set(VTKIT_TCL_SRC ${VTK_TCL_INCLUDE_DIR} CACHE PATH
+get_filename_component(TRY_TCL ${VTK_TCL_INCLUDE_DIR} PATH)
+get_filename_component(TRY_TK ${VTK_TK_INCLUDE_DIR} PATH)
+
+set(VTKIT_TCL_SRC ${TRY_TCL} CACHE PATH
     "The root of the Tcl source code tree")
-set(VTKIT_TK_SRC ${VTK_TK_INCLUDE_DIR} CACHE PATH
+set(VTKIT_TK_SRC ${TRY_TK} CACHE PATH
     "The root of the Tk source code tree")
 
 # Platform independent rules
