@@ -1,4 +1,4 @@
-/* 
+/*
  * tclAppInit.c --
  *
  *  Provides a default version of the main program and Tcl_AppInit
@@ -79,10 +79,10 @@ Tcl_AppInitProc	Pwb_Init;
 #ifdef TCL_THREADS
 Tcl_AppInitProc	Thread_Init;
 #endif
-#if 1
-#ifdef _WIN32
-Tcl_AppInitProc	Dde_Init, Registry_Init;
-#endif
+#ifdef KIT_INCLUDES_TCL_WIN_LIBS
+  #ifdef _WIN32
+  Tcl_AppInitProc	Dde_Init, Registry_Init;
+  #endif
 #endif
 
 char *tclExecutableName;
@@ -125,7 +125,7 @@ static char* getPreInitFromExe() {
 	  int ok = 0;
 	  up = ckalloc(u+1);
 	  up[u] = 0;
-	  if (u == z) 
+	  if (u == z)
 	    ok = (int) fread(up,1,u,fd) == u;
 	  else {
 	    char* zp = ckalloc(z+2);
@@ -154,7 +154,7 @@ static char* getPreInitFromExe() {
      *  If that fails, this code will throw an error, using a message box.
      */
 
-static char *preInitCmd = 
+static char *preInitCmd =
 #ifdef KIT_LITE
   0
 #else
@@ -193,22 +193,18 @@ static char *preInitCmd =
         "close $f\n"
     "}\n"
     "uplevel #0 $s\n"
-#ifdef _WIN32
-    "package ifneeded dde 1.3.2 {load {} dde}\n"
-    "package ifneeded registry 1.2.1 {load {} registry}\n"
 
 #ifdef KIT_INCLUDES_TBCLOAD
     "package ifneeded tbcload 1.7 {load {} tbcload}\n"
 #endif KIT_INCLUDES_TBCLOAD
 
-#endif
 "}\n"
 "tclKitInit"
 #endif /* KIT_LITE */
 ;
 
 static const char initScript[] =
-"if {[file isfile [file join [info nameofexe] main.tcl]]} {\n"  
+"if {[file isfile [file join [info nameofexe] main.tcl]]} {\n"
     "if {[info commands console] != {}} { console hide }\n"
     "set tcl_interactive 0\n"
     "incr argc\n"
@@ -235,7 +231,7 @@ void SetExecName(Tcl_Interp *interp) {
     }
 }
 
-int 
+int
 TclKit_AppInit(Tcl_Interp *interp)
 {
 #ifdef KIT_INCLUDES_VTK
@@ -257,15 +253,15 @@ TclKit_AppInit(Tcl_Interp *interp)
 #endif // KIT_INCLUDES_VTK_PARALLEL
 
 #ifdef KIT_INCLUDES_VTK_INFOVIS
-  Tcl_StaticPackage(0, "vtkInfovisTcl", Vtkinfovistcl_Init, NULL); 
+  Tcl_StaticPackage(0, "vtkInfovisTcl", Vtkinfovistcl_Init, NULL);
 #endif // KIT_INCLUDES_VTK_INFOVIS
 
 #ifdef KIT_INCLUDES_VTK_VIEWS
-  Tcl_StaticPackage(0, "vtkViewsTcl", Vtkviewstcl_Init, NULL); 
+  Tcl_StaticPackage(0, "vtkViewsTcl", Vtkviewstcl_Init, NULL);
 #endif // KIT_INCLUDES_VTK_VIEWS
 
 #ifdef KIT_INCLUDES_BIOENG
-  Tcl_StaticPackage(0, "vtkBioengTcl", Vtkbioengtcl_Init, NULL); 
+  Tcl_StaticPackage(0, "vtkBioengTcl", Vtkbioengtcl_Init, NULL);
 #endif // KIT_INCLUDES_BIOENG
 
 #endif // KIT_INCLUDES_VTK
@@ -276,17 +272,17 @@ TclKit_AppInit(Tcl_Interp *interp)
 
 #ifdef KIT_INCLUDES_ITCL
     Tcl_StaticPackage(0, "Itcl", Itcl_Init, NULL);
-#endif 
+#endif
 
 #ifdef KIT_LITE
     Tcl_StaticPackage(0, "thrive", Thrive_Init, NULL);
 #else
     Tcl_StaticPackage(0, "Mk4tcl", Mk4tcl_Init, NULL);
-#endif 
+#endif
 
 #if 10 * TCL_MAJOR_VERSION + TCL_MINOR_VERSION < 85
     Tcl_StaticPackage(0, "pwb", Pwb_Init, NULL);
-#endif 
+#endif
 
     Tcl_StaticPackage(0, "rechan", Rechan_Init, NULL);
     Tcl_StaticPackage(0, "vfs", Vfs_Init, NULL);
@@ -296,7 +292,7 @@ TclKit_AppInit(Tcl_Interp *interp)
     Tcl_StaticPackage(0, "Thread", Thread_Init, NULL);
 #endif
 
-#if 1
+#if KIT_INCLUDES_TCL_WIN_LIBS
 #ifdef _WIN32
     Tcl_StaticPackage(0, "dde", Dde_Init, NULL);
     Tcl_StaticPackage(0, "registry", Registry_Init, NULL);
