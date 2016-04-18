@@ -23,6 +23,13 @@ if(WIN32)
    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 endif()
 
+# Test for 64bit build esp. for Windows
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+   if(WIN32)
+      set(WIN64 1)
+   endif(WIN32)
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
 # Setup output paths.
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH
     "Single output directory for building all libraries.")
