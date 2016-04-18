@@ -19,7 +19,11 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
+
 #include "config.h"
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include <tcl.h>
 /* Required to access the 'stat' structure fields, and TclInExit() */
 #include "tclInt.h"
@@ -50,7 +54,6 @@
 #ifndef CONST86
 #define CONST86
 #endif
-
 
 /*
  * Only the _Init function is exported.
