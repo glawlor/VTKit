@@ -1,5 +1,5 @@
 // mk4tcl.cpp --
-// $Id: mk4tcl.cpp 4452 2008-12-10 22:57:54Z patthoyts $
+// $Id$
 // This is part of Metakit, see http://www.equi4.com/metakit.html
 
 #include "mk4tcl.h"
@@ -182,11 +182,14 @@ class SiasStrategy: public c4_Strategy {
     Tcl_Channel _chan;
     int _validMask;
     int _watchMask;
+    int _flags;
+    SiasStrategy *_next;
+    MkWorkspace *_workspace;
     Tcl_Interp *_interp;
 
     SiasStrategy(c4_Storage &storage_, const c4_View &view_, const c4_BytesProp
       &memo_, int row_): _storage(storage_), _view(view_), _memo(memo_), _row
-      (row_), _position(0), _interp(0) {
+      (row_), _position(0), _interp(0), _next(0), _workspace(0) {
         // set up mapping if the memo itself is mapped in its entirety
         c4_Strategy &strat = storage_.Strategy();
         if (strat._mapStart != 0) {
@@ -259,21 +262,55 @@ class SiasStrategy: public c4_Strategy {
 ///////////////////////////////////////////////////////////////////////////////
 // New in 1.2: channel interface to memo fields
 
-typedef SiasStrategy MkChannel;
-
 typedef struct {
   Tcl_Event header;
   MkChannel *chan;
+  int flags;
 } MkEvent;
+
+#define CHANNEL_FLAG_PENDING (1<<1)
 
 static int mkEventProc(Tcl_Event *evPtr, int flags) {
   MkEvent *me = (MkEvent*)evPtr;
 
-  if (!(flags &TCL_FILE_EVENTS))
+  if (!(flags & TCL_FILE_EVENTS))
     return 0;
 
-  Tcl_NotifyChannel(me->chan->_chan, me->chan->_watchMask);
+  me->chan->_flags &= ~CHANNEL_FLAG_PENDING;
+  Tcl_NotifyChannel(me->chan->_chan, me->chan->_watchMask & me->flags);
   return 1;
+}
+
+static void SetupProc(ClientData clientData, int flags) {
+  MkWorkspace *ws = (MkWorkspace *)clientData;
+  int msec = 10000;
+  Tcl_Time blockTime = {0, 0};
+  if (!(flags & TCL_FILE_EVENTS))
+    return;
+  if (ws->_chanList != 0)
+    msec = 10;
+  blockTime.sec = msec / 1000;
+  blockTime.usec = (msec % 1000) * 1000;
+  Tcl_SetMaxBlockTime(&blockTime);
+}
+
+static void CheckProc(ClientData clientData, int flags) {
+  MkWorkspace *ws = (MkWorkspace *)clientData;
+  if (!(flags & TCL_FILE_EVENTS))
+    return;
+  for (MkChannel *chan = ws->_chanList; chan != NULL; chan = chan->_next) {
+    if (chan->_watchMask == 0)
+      continue;
+    int mask = TCL_WRITABLE | TCL_READABLE;
+    if (chan->_watchMask & mask) {
+      MkEvent *me = (MkEvent *)ckalloc(sizeof(MkEvent));
+      chan->_flags |= CHANNEL_FLAG_PENDING;
+      me->header.proc = mkEventProc;
+      me->chan = chan;
+      me->flags = mask;
+      Tcl_QueueEvent((Tcl_Event *)me, TCL_QUEUE_TAIL);
+    }
+  }
 }
 
 static int mkEventFilter(Tcl_Event *evPtr, ClientData instanceData) {
@@ -284,11 +321,24 @@ static int mkEventFilter(Tcl_Event *evPtr, ClientData instanceData) {
 
 static int mkClose(ClientData instanceData, Tcl_Interp *interp) {
   MkChannel *chan = (MkChannel*)instanceData;
+  MkWorkspace *ws = chan->_workspace;
+  MkChannel **tmpPtrPtr = &ws->_chanList;
 
   Tcl_DeleteEvents(mkEventFilter, (ClientData)chan);
+
+  /* remove this channel from the package list */
+  while (*tmpPtrPtr && (*tmpPtrPtr != chan)) {
+    tmpPtrPtr = &(*tmpPtrPtr)->_next;
+  }
+  if (*tmpPtrPtr == chan) {
+      *tmpPtrPtr = chan->_next;
+      chan->_next = 0;
+  } else {
+      d4_assert(false);
+  }
   chan->_chan = 0;
   delete chan;
-
+  
   return TCL_OK;
 }
 
@@ -726,21 +776,28 @@ void MkWorkspace::Item::ForceRefresh() {
   ++generation; // make sure all cached paths refresh on next access
 }
 
-MkWorkspace::MkWorkspace(Tcl_Interp *ip_): _interp(ip_) {
+MkWorkspace::MkWorkspace(Tcl_Interp *ip_): _interp(ip_), _chanList(0) {
   new Item("", "", 0, _items, 0);
 
   // never uses entry zero (so atoi failure in ForgetPath is harmless)
   _usedRows = _usedBuffer.SetBufferClear(16); 
-    // no realloc for first 16 temp rows
+  // no realloc for first 16 temp rows
 }
 
 MkWorkspace::~MkWorkspace() {
   CleanupCommands();
 
+  d4_assert(_chanList == 0);
+
   for (int i = _items.GetSize(); --i >= 0;)
     delete Nth(i);
 
+  for (MkChannel *chan = _chanList; chan; chan = chan->_next) {
+    Tcl_UnregisterChannel(_interp, chan->_chan);
+  }
+
   // need this to prevent recursion in Tcl_DeleteAssocData in 8.2 (not 8.0!)
+  Tcl_DeleteEventSource(SetupProc, CheckProc, this);
   Tcl_SetAssocData(_interp, "mk4tcl", 0, 0);
   Tcl_DeleteAssocData(_interp, "mk4tcl");
 }
@@ -1043,11 +1100,11 @@ MkPath &AsPath(Tcl_Obj *obj_) {
   return *(MkPath*)obj_->internalRep.twoPtrValue.ptr2;
 }
 
-int &AsIndex(Tcl_Obj *obj_) {
+long &AsIndex(Tcl_Obj *obj_) {
   d4_assert(obj_->typePtr ==  &mkCursorType);
   d4_assert(obj_->internalRep.twoPtrValue.ptr2 != 0);
 
-  return (int &)obj_->internalRep.twoPtrValue.ptr1;
+  return (long &)obj_->internalRep.twoPtrValue.ptr1;
 }
 
 static void FreeCursorInternalRep(Tcl_Obj *cursorPtr) {
@@ -1110,7 +1167,7 @@ static void UpdateStringOfCursor(Tcl_Obj *cursorPtr) {
   EnterMutex(path._ws->_interp);
   c4_String s = path._path;
 
-  int index = AsIndex(cursorPtr);
+  long index = AsIndex(cursorPtr);
   if (index >= 0) {
     char buf[20];
     sprintf(buf, "%s%d", s.IsEmpty() ? "" : "!", index);
@@ -1455,7 +1512,7 @@ c4_View MkTcl::asView(Tcl_Obj *obj_) {
   return AsPath(obj_)._view;
 }
 
-int &MkTcl::changeIndex(Tcl_Obj *obj_) {
+long &MkTcl::changeIndex(Tcl_Obj *obj_) {
   SetCursorFromAny(interp, obj_);
   Tcl_InvalidateStringRep(obj_);
   return AsIndex(obj_);
@@ -1463,7 +1520,7 @@ int &MkTcl::changeIndex(Tcl_Obj *obj_) {
 
 c4_RowRef MkTcl::asRowRef(Tcl_Obj *obj_, int type_) {
   c4_View view = asView(obj_);
-  int index = AsIndex(obj_);
+  long index = AsIndex(obj_);
   int size = view.GetSize();
 
   switch (type_) {
@@ -1621,7 +1678,7 @@ int MkTcl::RowCmd() {
           return _error;
 
         c4_View view = row.Container();
-        int index = AsIndex(objv[2]);
+        long index = AsIndex(objv[2]);
 
         int count = objc > 3 ? tcl_GetIntFromObj(objv[3]): 1;
         if (count > view.GetSize() - index)
@@ -1641,7 +1698,7 @@ int MkTcl::RowCmd() {
           return _error;
 
         c4_View view = toRow.Container();
-        int n = AsIndex(objv[2]);
+        long n = AsIndex(objv[2]);
 
         int count = objc > 3 ? tcl_GetIntFromObj(objv[3]): 1;
         if (count >= 1) {
@@ -1790,6 +1847,11 @@ int MkTcl::FileCmd() {
 
     case 2:
        { // close
+        for (MkChannel *chan = work._chanList; chan; chan = chan->_next) {
+          if (chan->_storage == np->_storage ) {
+            Tcl_UnregisterChannel(interp, chan->_chan);
+          }
+        }
         delete np;
       }
       break;
@@ -1911,7 +1973,11 @@ int MkTcl::FileCmd() {
         // now return the values as a list
         Tcl_Obj *r = tcl_GetObjResult();
         for (int i = 1; i < a->GetSize() - 1 && !_error; ++i)
-          tcl_ListObjAppendElement(r, Tcl_NewLongObj((long)a->GetAt(i)));
+#ifdef TCL_WIDE_INT_TYPE
+		  tcl_ListObjAppendElement(r, Tcl_NewLongObj((Tcl_WideInt)a->GetAt(i)));
+#else
+		  tcl_ListObjAppendElement(r, Tcl_NewLongObj((long)a->GetAt(i)));
+#endif
         return _error;
       }
   }
@@ -2206,7 +2272,7 @@ int MkTcl::CursorCmd() {
   if (objc <= 3) {
     if (id == 1)
      { // position without value returns current value
-      Tcl_SetIntObj(tcl_GetObjResult(), AsIndex(var));
+      Tcl_SetLongObj(tcl_GetObjResult(), AsIndex(var));
       return _error;
     }
 
@@ -2338,7 +2404,7 @@ int MkTcl::SelectCmd() {
 int MkTcl::ChannelCmd() {
   c4_RowRef row = asRowRef(objv[1]);
   MkPath &path = AsPath(objv[1]);
-  int index = AsIndex(objv[1]);
+  long index = AsIndex(objv[1]);
 
   if (_error)
     return _error;
@@ -2371,6 +2437,7 @@ int MkTcl::ChannelCmd() {
 
   mkChan->_watchMask = 0;
   mkChan->_validMask = mode;
+  mkChan->_flags = 0;
   mkChan->_interp = interp;
   mkChan->_chan = Tcl_CreateChannel(&mkChannelType, buffer, (ClientData)mkChan,
     mode);
@@ -2382,6 +2449,11 @@ int MkTcl::ChannelCmd() {
 
   if (_error)
     return _error;
+
+  /* insert this channel at the front of the workspace channels list */
+  mkChan->_workspace = &work;
+  mkChan->_next = work._chanList;
+  work._chanList = mkChan;
 
   KeepRef o = tcl_NewStringObj(buffer);
   return tcl_SetObjResult(o);
@@ -2488,6 +2560,7 @@ void MkWorkspace::CleanupCommands() {
 }
 
 static void ExitProc(ClientData cd_) {
+  Tcl_DeleteEventSource(SetupProc, CheckProc, cd_);
   delete (MkWorkspace*)cd_;
 }
 
@@ -2512,6 +2585,7 @@ static int Mktcl_Cmds(Tcl_Interp *interp, bool /*safe*/) {
     // since that does not seem to trigger exitproc handling (!)
     Tcl_SetAssocData(interp, "mk4tcl", DelProc, ws);
     Tcl_CreateExitHandler(ExitProc, ws);
+    Tcl_CreateEventSource(SetupProc, CheckProc, ws);
   }
 
   // this list must match the "CmdDef defTab []" above.
@@ -2525,7 +2599,7 @@ static int Mktcl_Cmds(Tcl_Interp *interp, bool /*safe*/) {
   for (int i = 0; cmds[i]; ++i)
     ws->DefCmd(new MkTcl(ws, interp, i, prefix + cmds[i]));
 
-  return Tcl_PkgProvide(interp, "Mk4tcl", "2.4.9.7");
+  return Tcl_PkgProvide(interp, "Mk4tcl", "2.4.9.8");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2550,3 +2624,11 @@ EXTERN int Mk_SafeInit(Tcl_Interp *interp) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Local variables:
+ * mode: c
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * End:
+ */
