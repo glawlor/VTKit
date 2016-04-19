@@ -1,5 +1,5 @@
 // mk4tcl.h --
-// $Id: mk4tcl.h 4435 2008-08-01 19:58:42Z patthoyts $
+// $Id$
 // This is part of Metakit, the homepage is http://www.equi4.com/metakit.html
 
 #include "mk4.h"
@@ -111,6 +111,9 @@ class MkPath {
 ///////////////////////////////////////////////////////////////////////////////
 // A workspace manages a number of storage objects and their associated paths.
 
+class SiasStrategy;
+typedef SiasStrategy MkChannel;
+
 class MkWorkspace {
     c4_PtrArray _items; // items, or null if released
     c4_Bytes _usedBuffer; // buffer, using 1 byte per entry
@@ -119,6 +122,7 @@ class MkWorkspace {
 
   public:
     Tcl_Interp *_interp;
+    MkChannel *_chanList;
 
     struct Item {
         const c4_String _name; // the alias for this storage
@@ -180,7 +184,7 @@ const c4_Property &AsProperty(Tcl_Obj *objPtr, const c4_View &view_);
 //  Cursors in Tcl are implemented as a pointer to an MkPath plus an index.
 
 MkPath &AsPath(Tcl_Obj *obj_);
-int &AsIndex(Tcl_Obj *obj_);
+long &AsIndex(Tcl_Obj *obj_);
 int SetCursorFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 
 // 24nov02: added to support releasing mutex lock during loop eval's
@@ -273,7 +277,7 @@ class MkTcl: public Tcl {
     ~MkTcl();
 
     c4_View asView(Tcl_Obj *obj_);
-    int &changeIndex(Tcl_Obj *obj_);
+    long &changeIndex(Tcl_Obj *obj_);
     c4_RowRef asRowRef(Tcl_Obj *obj_, int type_ = kExistingRow);
     int GetCmd();
     int SetValues(const c4_RowRef &row_, int objc, Tcl_Obj *const * objv);
